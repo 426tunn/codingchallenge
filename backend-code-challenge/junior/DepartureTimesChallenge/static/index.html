@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departure Times</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Get Departure Times</h1>
+        <form id="departureForm">
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required>
+            <button type="submit">Get Departure Times</button>
+        </form>
+        <div id="results"></div>
+    </div>
+    <script>
+        document.getElementById('departureForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const address = document.getElementById('address').value;
+            try {
+                const response = await fetch('http://localhost:3201/departures', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response from server:', errorText);
+                    throw new Error('Network response was not ok');
+                }
+
+                const stopPoints = await response.json();
+
+                if (!Array.isArray(stopPoints) || stopPoints.length === 0) {
+                    throw new Error('No stop points found');
+                }
+
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+
+                stopPoints.forEach(stopPoint => {
+                    const stopPointDiv = document.createElement('div');
+                    stopPointDiv.classList.add('stopPoint');
+                    stopPointDiv.innerHTML = `
+                        <h3>${stopPoint.commonName}</h3>
+                        <p>Modes: ${stopPoint.modes.join(', ')}</p>
+                        <p>Distance: ${stopPoint.distance.toFixed(2)} meters</p>
+                        <p>Lines:</p>
+                        <ul>
+                            ${stopPoint.lines.map(line => `<li>${line.name}</li>`).join('')}
+                        </ul>
+                    `;
+                    resultsDiv.appendChild(stopPointDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching departure times:', error);
+                document.getElementById('results').innerText = 'Error fetching departure times: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
