@@ -1,17 +1,21 @@
-// import { expect } from 'chai';
-// import request from 'supertest';
-// import app from '../app';
+import expect from 'expect';
+import request from 'supertest';
+import app from '../app'; 
 
-// describe('Departure API', () => {
-//   it('should fetch departure times based on address', (done) => {
-//     request(app)
-//       .post('/departures')
-//       .send({ address: '10 Downing St, Westminster, London SW1A 2AA, UK' })
-//       .expect(200)
-//       .end((err, res) => {
-//         if (err) return done(err);
-//         expect(res.body).to.be.an('object');
-//         done();
-//       });
-//   });
-// });
+describe('GET /departures', () => {
+  test('It should respond with 200 status code and an array of stop points', async () => {
+    const response = await request(app).get('/departures').expect(200);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThan(0);
+    expect(response.body[0]).toHaveProperty('commonName');
+    expect(response.body[0]).toHaveProperty('modes');
+    expect(response.body[0]).toHaveProperty('distance');
+    expect(response.body[0]).toHaveProperty('lines');
+  });
+
+  test('It should respond with 400 status code if no address is provided', async () => {
+    const response = await request(app).get('/departures').expect(400);
+    expect(response.body).toHaveProperty('error');
+    expect(response.body.error).toBe('Invalid location request');
+  });
+});
